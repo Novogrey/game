@@ -144,13 +144,20 @@ function startLevel() {
 
     document.getElementById('nextLevelBtn').style.display = 'none';
     
-    // Восстанавливаем HTML контейнера фото
-    document.getElementById('photoContainer').innerHTML = '<img id="gameImage" src="" alt="Загрузка...">';
+    // Восстанавливаем HTML контейнера фото - ВАЖНО!
+    const photoContainer = document.getElementById('photoContainer');
+    if (photoContainer) {
+        photoContainer.innerHTML = '<img id="gameImage" src="" alt="Загрузка...">';
+        console.log('photoContainer восстановлен');
+    } else {
+        console.error('photoContainer не найден!');
+    }
 
     showLoading('Подготовка фотографий...');
 
     setTimeout(() => {
         hideLoading();
+        console.log('Вызываем loadRandomQuestion для уровня', levelKey);
         loadRandomQuestion();
     }, 800);
 }
