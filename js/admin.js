@@ -153,7 +153,7 @@ function loadPlayersTable() {
                     <td><span class="score">${player.score || 0}</span></td>
                     <td><span style="color: ${statusColor}; font-weight: 600; padding: 5px 10px; background: rgba(255,255,255,0.1); border-radius: 4px;">${statusBadge}</span></td>
                     <td>
-                        <button class="btn btn-danger" onclick="deleteAllResultsByPlayer('${player.key}', '${player.name}')">🗑️ Удалить результаты</button>
+                        <button class="btn btn-danger" onclick="deleteAllResultsByPlayer('${player.key}', '${player.name}')">🗑️ Удалить игрока</button>
                     </td>
                 </tr>`;
             });
@@ -344,7 +344,7 @@ function deleteResult(resultKey) {
 // ========== ВЫКИДЫВАНИЕ ИГРОКА (ПРЕКРАЩЕНИЕ ТЕСТА) ==========
 
 function deleteAllResultsByPlayer(playerId, playerName) {
-    if (confirm(`❓ Вы уверены что хотите удалить ВСЕ результаты тестов игрока "${playerName}"?\n\nЭто удалит все его ответы, но не самого игрока.`)) {
+    if (confirm(`❓ Вы уверены что хотите ПОЛНОСТЬЮ удалить игрока "${playerName}"?\n\nЭто удалит:\n- Все его результаты тестов\n- Самого игрока из списка\n\nОтмена невозможна!`)) {
         // Сначала удаляем все результаты этого игрока
         db.ref('gameResults').orderByChild('playerId').equalTo(playerId).once('value', (snapshot) => {
             const updates = {};
@@ -355,18 +355,18 @@ function deleteAllResultsByPlayer(playerId, playerName) {
                 deletedCount++;
             });
             
-            // Обнуляем баллы игрока
-            updates['/players/' + playerId + '/score'] = 0;
+            // Удаляем самого игрока
+            updates['/players/' + playerId] = null;
             
             // Применяем все удаления одновременно
             db.ref().update(updates).then(() => {
-                alert(`✅ Удалено ${deletedCount} результатов! Баллы игрока обнулены.`);
+                alert(`✅ Игрок "${playerName}" и его ${deletedCount} результатов удалены!`);
                 loadPlayersTable();
                 loadGameResults();
                 loadAdminData();
             }).catch(error => {
                 console.error('Ошибка при удалении:', error);
-                alert('❌ Ошибка при удалении результатов');
+                alert('❌ Ошибка при удалении');
             });
         });
     }
