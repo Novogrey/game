@@ -295,7 +295,7 @@ function showLevelComplete() {
         document.getElementById('nextLevelBtn').style.display = 'block';
     } else {
         document.getElementById('photoContainer').innerHTML =
-            '<div style="text-align: center; padding: 50px; font-size: 48px; animation: slideIn 0.5s ease;">🏆 ИГРА ПРОЙДЕНА! Ты красавчик!</div>';
+            '<div style="text-align: center; padding: 50px; font-size: 48px; animation: slideIn 0.5s ease;">🏆 Игра пройдена!</div>';
     }
 }
 
