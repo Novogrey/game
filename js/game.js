@@ -177,7 +177,12 @@ function loadRandomQuestion() {
     document.getElementById('progressText').textContent =
         `Отвечено ${answeredQuestions.length} из ${currentQuestions.length}`;
 
-    document.getElementById('gameImage').src = currentQuestion.image;
+    const gameImage = document.getElementById('gameImage');
+    if (gameImage) {
+        gameImage.src = currentQuestion.image;
+    } else {
+        console.error('Элемент gameImage не найден в DOM');
+    }
 
     preloadNextImage();
 
