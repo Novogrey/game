@@ -143,6 +143,9 @@ function startLevel() {
     badge.textContent = levelKey === 'easy' ? '⭐' : levelKey === 'medium' ? '⭐⭐' : '⭐⭐⭐';
 
     document.getElementById('nextLevelBtn').style.display = 'none';
+    
+    // Восстанавливаем HTML контейнера фото
+    document.getElementById('photoContainer').innerHTML = '<img id="gameImage" src="" alt="Загрузка...">';
 
     showLoading('Подготовка фотографий...');
 
@@ -177,11 +180,19 @@ function loadRandomQuestion() {
     document.getElementById('progressText').textContent =
         `Отвечено ${answeredQuestions.length} из ${currentQuestions.length}`;
 
-    const gameImage = document.getElementById('gameImage');
+    // Убедимся, что элемент существует перед присваиванием src
+    let gameImage = document.getElementById('gameImage');
+    if (!gameImage) {
+        console.warn('gameImage не найден, восстанавливаем photoContainer');
+        document.getElementById('photoContainer').innerHTML = '<img id="gameImage" src="" alt="Загрузка...">';
+        gameImage = document.getElementById('gameImage');
+    }
+    
     if (gameImage) {
         gameImage.src = currentQuestion.image;
     } else {
-        console.error('Элемент gameImage не найден в DOM');
+        console.error('Не удалось найти или создать элемент gameImage');
+        return;
     }
 
     preloadNextImage();
