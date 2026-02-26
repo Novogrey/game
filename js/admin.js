@@ -54,7 +54,6 @@ function showModal(title, message, callback, options = {}) {
 function closeModal() {
     const modal = document.getElementById('customModal');
     modal.classList.remove('show');
-    modalCallback = null;
     document.getElementById('modalInput').value = '';
 }
 
@@ -67,9 +66,13 @@ function confirmModal() {
         }
     }
     
+    // Сохраняем callback перед закрытием модали
+    const callback = modalCallback;
     closeModal();
-    if (modalCallback) {
-        modalCallback();
+    modalCallback = null;
+    
+    if (callback) {
+        callback();
     }
 }
 
@@ -129,11 +132,7 @@ function adminLogout() {
         'Вы уверены? Вы выйдете из системы администратора.',
         () => {
             isAdminLoggedIn = false;
-            document.getElementById('adminLogin').style.display = 'flex';
-            document.getElementById('adminPanel').style.display = 'none';
-            document.getElementById('adminPassword').value = '';
-            document.getElementById('loginError').style.display = 'none';
-            showNotification('✅ Вы вышли из системы');
+            window.location.href = 'index.html';
         }
     );
 }
