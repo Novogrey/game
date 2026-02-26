@@ -13,6 +13,11 @@ const levelNames = {
     medium: 'Средний',
     hard: 'Сложный'
 };
+const levelPoints = {
+    easy: 2,
+    medium: 3,
+    hard: 5
+};
 
 let currentLevelIndex = 0;
 let currentQuestions = [];
@@ -243,7 +248,9 @@ function checkAnswer(selected) {
     });
 
     if (isCorrect) {
-        currentPlayer.score += 10;
+        const levelKey = levels[currentLevelIndex];
+        const points = levelPoints[levelKey];
+        currentPlayer.score += points;
         document.getElementById('score').textContent = currentPlayer.score;
         db.ref('players/' + currentPlayer.id).update({
             score: currentPlayer.score,
