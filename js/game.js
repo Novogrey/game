@@ -36,12 +36,36 @@ async function loadQuestions() {
     showLoading('Загрузка вопросов...');
     try {
         const response = await fetch(APPS_SCRIPT_URL);
-        questions = await response.json();
+        const data = await response.json();
+        
+        // Проверяем структуру данных
+        if (data && typeof data === 'object') {
+            questions = data;
+        } else {
+            throw new Error('Неправильный формат данных');
+        }
+        
         console.log('Вопросы загружены:', questions);
+        console.log('Легкие вопросы:', questions.easy?.length || 0);
+        console.log('Средние вопросы:', questions.medium?.length || 0);
+        console.log('Сложные вопросы:', questions.hard?.length || 0);
+        
+        // Проверяем наличие вопросов для всех уровней
+        if (!questions.easy || questions.easy.length === 0) {
+            console.error('Нет вопросов для легкого уровня');
+        }
+        if (!questions.medium || questions.medium.length === 0) {
+            console.error('Нет вопросов для среднего уровня');
+        }
+        if (!questions.hard || questions.hard.length === 0) {
+            console.error('Нет вопросов для сложного уровня');
+        }
+        
         hideLoading();
         startLevel();
     } catch (error) {
         console.error('Ошибка загрузки вопросов:', error);
+        document.getElementById('loadingText').textContent = 'Ошибка загрузки. Проверьте консоль.';
         hideLoading();
     }
 }
@@ -98,6 +122,18 @@ function login() {
 
 function startLevel() {
     const levelKey = levels[currentLevelIndex];
+    
+    // Проверяем, есть ли вопросы для этого уровня
+    if (!questions[levelKey] || questions[levelKey].length === 0) {
+        console.warn(`Вопросы для уровня ${levelKey} не загружены:`, questions);
+        showLoading('Загрузка вопросов...');
+        // Пытаемся перезагрузить вопросы
+        setTimeout(() => {
+            loadQuestions();
+        }, 500);
+        return;
+    }
+    
     currentQuestions = [...questions[levelKey]];
     answeredQuestions = [];
 
@@ -117,6 +153,13 @@ function startLevel() {
 }
 
 function loadRandomQuestion() {
+    if (!currentQuestions || currentQuestions.length === 0) {
+        document.getElementById('photoContainer').innerHTML =
+            '<div style="text-align: center; padding: 50px; font-size: 24px; color: #f44336;">❌ Нет вопросов для этого уровня</div>';
+        document.getElementById('optionsContainer').innerHTML = '';
+        return;
+    }
+    
     if (answeredQuestions.length >= currentQuestions.length) {
         showLevelComplete();
         return;
