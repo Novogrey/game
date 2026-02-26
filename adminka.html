@@ -10,6 +10,27 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
+<!-- КАСТОМНАЯ МОДАЛЬ -->
+<div id="customModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <h2 id="modalTitle">Подтверждение</h2>
+        <p id="modalMessage">Вы уверены?</p>
+        <div class="custom-modal-input-wrapper">
+            <input type="text" id="modalInput" placeholder="Введите текст..." style="display: none;">
+        </div>
+        <div class="custom-modal-buttons">
+            <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Отмена</button>
+            <button class="modal-btn modal-btn-confirm" onclick="confirmModal()">Подтвердить</button>
+        </div>
+    </div>
+</div>
+
+<!-- КАСТОМНОЕ УВЕДОМЛЕНИЕ -->
+<div id="customNotification" class="custom-notification">
+    <span id="notificationMessage">Готово!</span>
+    <button class="notification-close" onclick="closeNotification()">&times;</button>
+</div>
+
 <div class="admin-wrapper">
     <!-- ЭКРАН ЛОГИНА -->
     <div id="adminLogin" class="admin-login">

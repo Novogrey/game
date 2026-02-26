@@ -10,6 +10,97 @@ const correctPassword = "Admin@2024!Secure#Pass";
 
 let isAdminLoggedIn = false;
 
+// ========== КАСТОМНЫЕ МОДАЛИ ========== 
+
+let modalCallback = null;
+let modalInputRequired = false;
+let modalExpectedInput = null;
+let notificationTimeout = null;
+
+function showModal(title, message, callback, options = {}) {
+    const modal = document.getElementById('customModal');
+    const titleEl = document.getElementById('modalTitle');
+    const messageEl = document.getElementById('modalMessage');
+    const inputEl = document.getElementById('modalInput');
+    const confirmBtn = document.querySelector('.modal-btn-confirm');
+    
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    
+    // Настройка опций
+    if (options.requireInput) {
+        inputEl.style.display = 'block';
+        inputEl.placeholder = options.inputPlaceholder || 'Введите текст...';
+        inputEl.value = '';
+        inputEl.focus();
+        modalInputRequired = true;
+        modalExpectedInput = options.expectedInput || null;
+    } else {
+        inputEl.style.display = 'none';
+        modalInputRequired = false;
+        modalExpectedInput = null;
+    }
+    
+    if (options.isDanger) {
+        confirmBtn.classList.add('danger');
+    } else {
+        confirmBtn.classList.remove('danger');
+    }
+    
+    modalCallback = callback;
+    modal.classList.add('show');
+}
+
+function closeModal() {
+    const modal = document.getElementById('customModal');
+    modal.classList.remove('show');
+    modalCallback = null;
+    document.getElementById('modalInput').value = '';
+}
+
+function confirmModal() {
+    if (modalInputRequired) {
+        const input = document.getElementById('modalInput').value;
+        if (modalExpectedInput && input !== modalExpectedInput) {
+            showNotification('❌ Неправильный ввод!', true);
+            return;
+        }
+    }
+    
+    closeModal();
+    if (modalCallback) {
+        modalCallback();
+    }
+}
+
+function showNotification(message, isError = false) {
+    const notification = document.getElementById('customNotification');
+    const messageEl = document.getElementById('notificationMessage');
+    
+    messageEl.textContent = message;
+    
+    if (isError) {
+        notification.classList.add('error');
+    } else {
+        notification.classList.remove('error');
+    }
+    
+    notification.classList.add('show');
+    
+    if (notificationTimeout) {
+        clearTimeout(notificationTimeout);
+    }
+    
+    notificationTimeout = setTimeout(() => {
+        closeNotification();
+    }, 4000);
+}
+
+function closeNotification() {
+    const notification = document.getElementById('customNotification');
+    notification.classList.remove('show');
+}
+
 // ========== ФУНКЦИИ ЛОГИНА ==========
 
 function adminLogin() {
@@ -33,13 +124,18 @@ function adminLogin() {
 }
 
 function adminLogout() {
-    if (confirm('Вы уверены? Вы выйдете из системы администратора.')) {
-        isAdminLoggedIn = false;
-        document.getElementById('adminLogin').style.display = 'flex';
-        document.getElementById('adminPanel').style.display = 'none';
-        document.getElementById('adminPassword').value = '';
-        document.getElementById('loginError').style.display = 'none';
-    }
+    showModal(
+        '🚪 Выход',
+        'Вы уверены? Вы выйдете из системы администратора.',
+        () => {
+            isAdminLoggedIn = false;
+            document.getElementById('adminLogin').style.display = 'flex';
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('loginError').style.display = 'none';
+            showNotification('✅ Вы вышли из системы');
+        }
+    );
 }
 
 // Обработка Enter в поле пароля
@@ -49,6 +145,33 @@ document.addEventListener('DOMContentLoaded', function() {
         passwordInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 adminLogin();
+            }
+        });
+    }
+    
+    // Обработка Escape для закрытия модали
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+    
+    // Обработка Enter в поле модали
+    const modalInput = document.getElementById('modalInput');
+    if (modalInput) {
+        modalInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                confirmModal();
+            }
+        });
+    }
+    
+    // Закрытие модали при клике на фон
+    const modal = document.getElementById('customModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
             }
         });
     }
@@ -227,15 +350,20 @@ function updateLevelStats(results) {
 // ========== СБРОС БАЗЫ ДАННЫХ ==========
 
 function resetDatabase() {
-    const confirmed = confirm('⚠️ ВНИМАНИЕ! Это удалит ВСЕ данные!\n\nВы уверены?');
-    if (!confirmed) return;
+    showModal(
+        '⚠️ ВНИМАНИЕ!',
+        'Это удалит ВСЕ данные из базы!\n\nНапишите "УДАЛИТЬ" для подтверждения:',
+        performReset,
+        {
+            requireInput: true,
+            inputPlaceholder: 'Введите "УДАЛИТЬ"...',
+            expectedInput: 'УДАЛИТЬ',
+            isDanger: true
+        }
+    );
+}
 
-    const doubleConfirm = prompt('Напишите "УДАЛИТЬ" для подтверждения:');
-    if (doubleConfirm !== 'УДАЛИТЬ') {
-        alert('Сброс отменён');
-        return;
-    }
-
+function performReset() {
     const resetBtn = document.getElementById('resetBtn');
     resetBtn.disabled = true;
     resetBtn.textContent = '⏳ Удаление...';
@@ -246,13 +374,13 @@ function resetDatabase() {
     ]).then(() => {
         resetBtn.disabled = false;
         resetBtn.textContent = '🗑️ Сбросить таблицу';
-        alert('✅ База данных очищена!');
+        showNotification('✅ База данных очищена!');
         loadAdminData();
     }).catch(error => {
         console.error('Ошибка при сбросе:', error);
         resetBtn.disabled = false;
         resetBtn.textContent = '🗑️ Сбросить таблицу';
-        alert('❌ Ошибка при сбросе базы данных');
+        showNotification('❌ Ошибка при сбросе базы данных', true);
     });
 }
 
@@ -330,49 +458,58 @@ function loadGameResults() {
 // ========== УДАЛЕНИЕ РЕЗУЛЬТАТА ТЕСТА ==========
 
 function deleteResult(resultKey) {
-    if (confirm('❓ Вы уверены что хотите удалить этот результат?')) {
-        db.ref('gameResults/' + resultKey).remove().then(() => {
-            alert('✅ Результат удалён!');
-            loadGameResults();
-        }).catch(error => {
-            console.error('Ошибка при удалении:', error);
-            alert('❌ Ошибка при удалении результата');
-        });
-    }
+    showModal(
+        '❓ Удаление результата',
+        'Вы уверены что хотите удалить этот результат?',
+        () => {
+            db.ref('gameResults/' + resultKey).remove().then(() => {
+                showNotification('✅ Результат удалён!');
+                loadGameResults();
+            }).catch(error => {
+                console.error('Ошибка при удалении:', error);
+                showNotification('❌ Ошибка при удалении результата', true);
+            });
+        }
+    );
 }
 
 // ========== ВЫКИДЫВАНИЕ ИГРОКА (ПРЕКРАЩЕНИЕ ТЕСТА) ==========
 
 function deleteAllResultsByPlayer(playerId, playerName) {
-    if (confirm(`❓ Вы уверены что хотите ПОЛНОСТЬЮ удалить игрока "${playerName}"?\n\nЭто удалит:\n- Все его результаты тестов\n- Самого игрока из списка\n\nОтмена невозможна!`)) {
-        // Сначала удаляем все результаты этого игрока
-        db.ref('gameResults').orderByChild('playerId').equalTo(playerId).once('value', (snapshot) => {
-            const updates = {};
-            let deletedCount = 0;
-            
-            snapshot.forEach(child => {
-                updates['/gameResults/' + child.key] = null;
-                deletedCount++;
-            });
-            
-            // Удаляем самого игрока
-            updates['/players/' + playerId] = null;
-            
-            // Применяем все удаления одновременно
-            db.ref().update(updates).then(() => {
-                alert(`✅ Игрок "${playerName}" и его ${deletedCount} результатов удалены!`);
-                loadPlayersTable();
-                loadGameResults();
-                loadAdminData();
-            }).catch(error => {
-                console.error('Ошибка при удалении:', error);
-                alert('❌ Ошибка при удалении');
-            });
+    showModal(
+        '❌ Удаление игрока',
+        `Вы уверены что хотите ПОЛНОСТЬЮ удалить игрока "${playerName}"?\n\nЭто удалит:\n- Все его результаты тестов\n- Самого игрока из списка\n\nОтмена невозможна!`,
+        () => performDeletePlayer(playerId, playerName),
+        { isDanger: true }
+    );
+}
+
+function performDeletePlayer(playerId, playerName) {
+    db.ref('gameResults').orderByChild('playerId').equalTo(playerId).once('value', (snapshot) => {
+        const updates = {};
+        let deletedCount = 0;
+        
+        snapshot.forEach(child => {
+            updates['/gameResults/' + child.key] = null;
+            deletedCount++;
         });
-    }
+        
+        // Удаляем самого игрока
+        updates['/players/' + playerId] = null;
+        
+        // Применяем все удаления одновременно
+        db.ref().update(updates).then(() => {
+            showNotification(`✅ Игрок "${playerName}" и его ${deletedCount} результатов удалены!`);
+            loadPlayersTable();
+            loadGameResults();
+            loadAdminData();
+        }).catch(error => {
+            console.error('Ошибка при удалении:', error);
+            showNotification('❌ Ошибка при удалении', true);
+        });
+    });
 }
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 
 console.log('Админ панель загружена');
-console.log('Пароль для входа: Admin@2024!Secure#Pass');
