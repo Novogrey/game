@@ -291,6 +291,58 @@
     font-size: 14px;
 }
 
+/* ========== СТИЛИ КНОПОК ========== */
+
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-block;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #bb86fc 0%, #9b6ad0 100%);
+    color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+    box-shadow: 0 5px 15px rgba(187, 134, 252, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+    color: #fff;
+}
+
+.btn-success:hover:not(:disabled) {
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    color: #fff;
+}
+
+.btn-danger:hover:not(:disabled) {
+    box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+}
+
 /* ========== АДАПТИВНОСТЬ ========== */
 
 @media (max-width: 768px) {
@@ -319,6 +371,12 @@
 
     .reset-btn {
         width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 10px !important;
+        margin-left: 0 !important;
     }
 
     .table-wrapper {
