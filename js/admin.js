@@ -60,6 +60,7 @@ function loadAdminData() {
     loadPlayersStats();
     loadPlayersTable();
     loadGameStats();
+    loadGameResults();
 }
 
 function loadPlayersStats() {
@@ -98,14 +99,17 @@ function loadPlayersTable() {
     db.ref('players').on('value', (snapshot) => {
         const players = [];
         snapshot.forEach(child => {
-            players.push(child.val());
+            players.push({
+                ...child.val(),
+                key: child.key
+            });
         });
 
         players.sort((a, b) => (b.score || 0) - (a.score || 0));
 
         let html = '';
         if (players.length === 0) {
-            html = '<tr><td colspan="3" class="no-data">Пока нет игроков</td></tr>';
+            html = '<tr><td colspan="4" class="no-data">Пока нет игроков</td></tr>';
         } else {
             players.forEach((player, index) => {
                 html += `<tr>
@@ -115,6 +119,9 @@ function loadPlayersTable() {
                     </td>
                     <td><span class="class-badge">${player.class || '?'}</span></td>
                     <td><span class="score">${player.score || 0}</span></td>
+                    <td>
+                        <button class="btn btn-danger" onclick="kickPlayer('${player.key}', '${player.name}')">🚪 Выкидать</button>
+                    </td>
                 </tr>`;
             });
         }
@@ -230,6 +237,85 @@ function exportData() {
         link.click();
         URL.revokeObjectURL(url);
     });
+}
+
+// ========== ЗАГРУЗКА РЕЗУЛЬТАТОВ ТЕСТОВ ==========
+
+function loadGameResults() {
+    db.ref('gameResults').orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
+        const results = [];
+        snapshot.forEach(child => {
+            results.push({
+                ...child.val(),
+                key: child.key
+            });
+        });
+
+        // Сортируем по новым результатам
+        results.reverse();
+
+        let html = '';
+        if (results.length === 0) {
+            html = '<tr><td colspan="7" class="no-data">Пока нет результатов</td></tr>';
+        } else {
+            results.forEach((result, index) => {
+                const date = new Date(result.timestamp).toLocaleString('ru-RU');
+                const statusIcon = result.isCorrect ? '✅' : '❌';
+                const statusColor = result.isCorrect ? 'color: #4caf50;' : 'color: #f44336;';
+                
+                html += `<tr>
+                    <td>${result.playerName || 'Неизвестно'}</td>
+                    <td><span class="class-badge">${result.playerClass || '?'}</span></td>
+                    <td>
+                        ${result.level === 'easy' ? '⭐ Легкий' : 
+                          result.level === 'medium' ? '⭐⭐ Средний' : 
+                          '⭐⭐⭐ Сложный'}
+                    </td>
+                    <td>${result.selectedAnswer || 'Нет ответа'}</td>
+                    <td style="${statusColor}">${statusIcon}</td>
+                    <td style="font-size: 12px;">${date}</td>
+                    <td>
+                        <button class="btn btn-danger" style="font-size: 12px; padding: 5px 10px;" onclick="deleteResult('${result.key}')">❌</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        document.getElementById('resultsTableBody').innerHTML = html;
+    });
+}
+
+// ========== УДАЛЕНИЕ РЕЗУЛЬТАТА ТЕСТА ==========
+
+function deleteResult(resultKey) {
+    if (confirm('❓ Вы уверены что хотите удалить этот результат?')) {
+        db.ref('gameResults/' + resultKey).remove().then(() => {
+            alert('✅ Результат удалён!');
+            loadGameResults();
+        }).catch(error => {
+            console.error('Ошибка при удалении:', error);
+            alert('❌ Ошибка при удалении результата');
+        });
+    }
+}
+
+// ========== ВЫКИДЫВАНИЕ ИГРОКА (ПРЕКРАЩЕНИЕ ТЕСТА) ==========
+
+function kickPlayer(playerId, playerName) {
+    if (confirm(`❓ Вы уверены что хотите выкидать игрока "${playerName}"?\n\nТабло его обновится с некорректными данными.`)) {
+        // Помечаем игрока как "выкиданного" в Firebase
+        db.ref('players/' + playerId).update({
+            kicked: true,
+            kickedAt: new Date().getTime(),
+            kickedReason: 'admin'
+        }).then(() => {
+            alert(`✅ Игрок "${playerName}" был выкидан из игры!`);
+            loadPlayersTable();
+        }).catch(error => {
+            console.error('Ошибка при выкидывании игрока:', error);
+            alert('❌ Ошибка при выкидывании игрока');
+        });
+    }
 }
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========

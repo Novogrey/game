@@ -1,3 +1,26 @@
+// ========== ПРОВЕРКА СТАТУСА ИГРОКА ==========
+
+function checkPlayerStatus(playerId) {
+    db.ref('players/' + playerId).on('value', (snapshot) => {
+        const player = snapshot.val();
+        if (player && player.kicked) {
+            // Игрок был выкидан администратором
+            showKickMessage();
+        }
+    });
+}
+
+function showKickMessage() {
+    document.getElementById('gameScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('playerName').value = '';
+    
+    const errorDiv = document.getElementById('loginError');
+    errorDiv.style.display = 'block';
+    errorDiv.textContent = '🚫 Администратор выкидал вас из игры. Попробуйте позже.';
+    errorDiv.style.color = '#f44336';
+}
+
 // ========== ЛОГИКА ИГРЫ ==========
 
 let currentPlayer = {
@@ -120,6 +143,10 @@ function login() {
     document.getElementById('playerInfo').textContent = `👤 ${playerName} (${playerClass})`;
 
     loadLeaderboard();
+    
+    // Проверяем не был ли игрок выкидан администратором
+    checkPlayerStatus(currentPlayer.id);
+    
     loadQuestions();
 }
 
