@@ -218,9 +218,11 @@ function loadPlayersStats() {
 }
 
 function loadPlayersTable() {
-    // Сначала загружаем все результаты тестов, чтобы определить пройденные уровни
-    db.ref('gameResults').once('value', (resultsSnapshot) => {
-        const playerLevels = {}; // { playerId: ['easy', 'medium', 'hard'] }
+    let playerLevels = {}; // { playerId: ['easy', 'medium', 'hard'] }
+    
+    // Слушаем изменения в результатах тестов
+    db.ref('gameResults').on('value', (resultsSnapshot) => {
+        playerLevels = {};
         
         resultsSnapshot.forEach(child => {
             const result = child.val();
@@ -235,76 +237,85 @@ function loadPlayersTable() {
             playerLevels[key] = Array.from(playerLevels[key]).sort();
         });
         
-        // Теперь загружаем список игроков
-        db.ref('players').on('value', (snapshot) => {
-            const players = [];
-            snapshot.forEach(child => {
-                players.push({
-                    ...child.val(),
-                    key: child.key
-                });
+        // Обновляем таблицу, когда результаты меняются
+        updatePlayersTableDisplay(playerLevels);
+    });
+    
+    // Слушаем изменения в списке игроков
+    db.ref('players').on('value', (snapshot) => {
+        updatePlayersTableDisplay(playerLevels);
+    });
+}
+
+function updatePlayersTableDisplay(playerLevels) {
+    db.ref('players').once('value', (snapshot) => {
+        const players = [];
+        snapshot.forEach(child => {
+            players.push({
+                ...child.val(),
+                key: child.key
             });
+        });
 
-            players.sort((a, b) => (b.score || 0) - (a.score || 0));
+        players.sort((a, b) => (b.score || 0) - (a.score || 0));
 
-            let html = '';
-            if (players.length === 0) {
-                html = '<tr><td colspan="5" class="no-data">Пока нет игроков</td></tr>';
-            } else {
-                players.forEach((player, index) => {
-                    // Определяем статус на основе пройденных уровней
-                    let statusBadge = '⏳ Не начинал';
-                    let statusColor = '#888';
-                    
-                    const completedLevels = playerLevels[player.id] || [];
-                    
-                    if (completedLevels.length === 0) {
-                        statusBadge = '⏳ Не начинал';
-                        statusColor = '#888';
-                    } else if (completedLevels.length === 1) {
-                        if (completedLevels[0] === 'easy') {
-                            statusBadge = '📖 Проходит легкий';
-                            statusColor = '#4caf50';
-                        } else if (completedLevels[0] === 'medium') {
-                            statusBadge = '📖 Проходит средний';
-                            statusColor = '#ff9800';
-                        } else {
-                            statusBadge = '📖 Проходит сложный';
-                            statusColor = '#f44336';
-                        }
-                    } else if (completedLevels.length === 2) {
-                        if (completedLevels.includes('hard')) {
-                            statusBadge = '📖 Проходит сложный';
-                            statusColor = '#f44336';
-                        } else if (completedLevels.includes('medium')) {
-                            statusBadge = '✅ Завершил средний';
-                            statusColor = '#4caf50';
-                        } else {
-                            statusBadge = '✅ Завершил легкий';
-                            statusColor = '#4caf50';
-                        }
-                    } else if (completedLevels.length === 3) {
-                        statusBadge = '✅ Завершил все уровни!';
+        let html = '';
+        if (players.length === 0) {
+            html = '<tr><td colspan="5" class="no-data">Пока нет игроков</td></tr>';
+        } else {
+            players.forEach((player, index) => {
+                // Определяем статус на основе пройденных уровней
+                let statusBadge = '⏳ Не начинал';
+                let statusColor = '#888';
+                
+                const completedLevels = playerLevels[player.id] || [];
+                
+                if (completedLevels.length === 0) {
+                    statusBadge = '⏳ Не начинал';
+                    statusColor = '#888';
+                } else if (completedLevels.length === 1) {
+                    if (completedLevels[0] === 'easy') {
+                        statusBadge = '📖 Проходит легкий';
+                        statusColor = '#4caf50';
+                    } else if (completedLevels[0] === 'medium') {
+                        statusBadge = '📖 Проходит средний';
+                        statusColor = '#ff9800';
+                    } else {
+                        statusBadge = '📖 Проходит сложный';
+                        statusColor = '#f44336';
+                    }
+                } else if (completedLevels.length === 2) {
+                    if (completedLevels.includes('hard')) {
+                        statusBadge = '📖 Проходит сложный';
+                        statusColor = '#f44336';
+                    } else if (completedLevels.includes('medium')) {
+                        statusBadge = '✅ Завершил средний';
+                        statusColor = '#4caf50';
+                    } else {
+                        statusBadge = '✅ Завершил легкий';
                         statusColor = '#4caf50';
                     }
-                    
-                    html += `<tr>
-                        <td class="player-name">
-                            <span style="color: #bb86fc; font-weight: 700; margin-right: 10px;">#${index + 1}</span>
-                            ${player.name || 'Без имени'}
-                        </td>
-                        <td><span class="class-badge">${player.class || '?'}</span></td>
-                        <td><span class="score">${player.score || 0}</span></td>
-                        <td><span style="color: ${statusColor}; font-weight: 600; padding: 5px 10px; background: rgba(255,255,255,0.1); border-radius: 4px;">${statusBadge}</span></td>
-                        <td>
-                            <button class="btn btn-danger" onclick="deleteAllResultsByPlayer('${player.key}', '${player.name}')">🗑️ Удалить игрока</button>
-                        </td>
-                    </tr>`;
-                });
-            }
+                } else if (completedLevels.length === 3) {
+                    statusBadge = '✅ Завершил все уровни!';
+                    statusColor = '#4caf50';
+                }
+                
+                html += `<tr>
+                    <td class="player-name">
+                        <span style="color: #bb86fc; font-weight: 700; margin-right: 10px;">#${index + 1}</span>
+                        ${player.name || 'Без имени'}
+                    </td>
+                    <td><span class="class-badge">${player.class || '?'}</span></td>
+                    <td><span class="score">${player.score || 0}</span></td>
+                    <td><span style="color: ${statusColor}; font-weight: 600; padding: 5px 10px; background: rgba(255,255,255,0.1); border-radius: 4px;">${statusBadge}</span></td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteAllResultsByPlayer('${player.key}', '${player.name}')">🗑️ Удалить игрока</button>
+                    </td>
+                </tr>`;
+            });
+        }
 
-            document.getElementById('playersTableBody').innerHTML = html;
-        });
+        document.getElementById('playersTableBody').innerHTML = html;
     });
 }
 
