@@ -1,0 +1,450 @@
+/* ========== СТИЛИ ДЛЯ ИГРЫ ========== */
+
+.game {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #1e1e1e;
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid #333;
+    min-height: 600px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* ========== ЭКРАН ЛОГИНА ========== */
+
+.login-screen {
+    text-align: center;
+    padding: 60px 20px;
+    max-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-screen h1 {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, #bb86fc 0%, #9b6ad0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.login-screen p {
+    font-size: 1.2rem;
+    color: #b0b0b0;
+    margin-bottom: 30px;
+}
+
+.login-screen input {
+    width: 100%;
+    max-width: 350px;
+    padding: 14px;
+    margin: 10px auto;
+    font-size: 16px;
+    background: #2d2d2d;
+    border: 2px solid #3d3d3d;
+    border-radius: 8px;
+    color: #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.login-screen input:focus {
+    outline: none;
+    border-color: #bb86fc;
+    box-shadow: 0 0 15px rgba(187, 134, 252, 0.3);
+}
+
+.login-screen button {
+    display: block;
+    margin: 20px auto 0;
+    width: 100%;
+    max-width: 350px;
+    padding: 14px;
+    background: linear-gradient(135deg, #bb86fc 0%, #9b6ad0 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.login-screen button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(187, 134, 252, 0.3);
+}
+
+.error-message {
+    color: #f44336;
+    font-size: 14px;
+    margin-top: 10px;
+    display: none;
+    font-weight: 600;
+}
+
+/* ========== ЭКРАН ИГРЫ ========== */
+
+.game-screen {
+    display: none;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 15px;
+    background: linear-gradient(135deg, #252525 0%, #1a1a2e 100%);
+    border-radius: 10px;
+    border: 1px solid #333;
+}
+
+.player-info {
+    font-size: 16px;
+    color: #b0b0b0;
+}
+
+.score-board {
+    font-size: 24px;
+    font-weight: bold;
+    color: #bb86fc;
+    background: rgba(187, 134, 252, 0.1);
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid #bb86fc;
+}
+
+/* ========== ИНФОРМАЦИЯ ОБ УРОВНЕ ========== */
+
+.level-info {
+    text-align: center;
+    margin: 30px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #252525 0%, #1a1a2e 100%);
+    border-radius: 10px;
+    border: 1px solid #333;
+}
+
+.level-info span {
+    font-size: 28px;
+    font-weight: bold;
+    color: #bb86fc;
+}
+
+.level-badge {
+    display: inline-block;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    margin-left: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.level-easy {
+    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+    color: #fff;
+    border: 1px solid #4caf50;
+}
+
+.level-medium {
+    background: linear-gradient(135deg, #b26a00 0%, #7d3f00 100%);
+    color: #fff;
+    border: 1px solid #ff9800;
+}
+
+.level-hard {
+    background: linear-gradient(135deg, #b71c1c 0%, #7d0000 100%);
+    color: #fff;
+    border: 1px solid #f44336;
+}
+
+/* ========== ФОТО И ВАРИАНТЫ ОТВЕТОВ ========== */
+
+#photoContainer {
+    margin: 20px 0;
+    text-align: center;
+    position: relative;
+}
+
+#gameImage {
+    width: 100%;
+    max-height: 450px;
+    object-fit: contain;
+    border-radius: 12px;
+    border: 2px solid #333;
+    background: #000;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: slideIn 0.5s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 25px 0;
+}
+
+.option-btn {
+    padding: 16px 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 2px solid #3d3d3d;
+    border-radius: 8px;
+    background: #2d2d2d;
+    color: #e0e0e0;
+    transition: all 0.3s ease;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.option-btn:hover:not(:disabled) {
+    border-color: #bb86fc;
+    background: #3d3d3d;
+    transform: translateY(-2px);
+}
+
+.option-btn:disabled {
+    opacity: 0.8;
+    cursor: not-allowed;
+}
+
+.correct {
+    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%) !important;
+    color: #fff !important;
+    border-color: #4caf50 !important;
+    animation: pulse 0.5s ease;
+}
+
+.wrong {
+    background: linear-gradient(135deg, #b71c1c 0%, #7d0000 100%) !important;
+    color: #fff !important;
+    border-color: #f44336 !important;
+    animation: shake 0.5s ease;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* ========== ПРОГРЕСС И КНОПКА СЛЕДУЮЩЕГО УРОВНЯ ========== */
+
+.progress {
+    text-align: center;
+    color: #888;
+    margin: 15px 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.next-level-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #bb86fc 0%, #9b6ad0 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    margin: 30px 0 20px;
+    transition: all 0.3s ease;
+    display: none;
+}
+
+.next-level-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(187, 134, 252, 0.3);
+}
+
+/* ========== ДВУХКОЛОННЫЙ МАКЕТ ========== */
+
+.game-content {
+    display: flex;
+    gap: 25px;
+    align-items: flex-start;
+}
+
+.leaderboard-sidebar {
+    flex: 0 0 280px;
+    padding: 20px;
+    background: linear-gradient(135deg, #252525 0%, #1a1a2e 100%);
+    border-radius: 10px;
+    border: 1px solid #333;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: sticky;
+    top: 20px;
+}
+
+.leaderboard-sidebar h3 {
+    margin: 0 0 15px 0;
+    color: #bb86fc;
+    font-size: 1.3rem;
+    text-align: center;
+}
+
+.game-main {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ========== ЛИДЕРБОРД ========== */
+
+.leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #333;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.leaderboard-item:hover {
+    background: rgba(187, 134, 252, 0.1);
+    padding-left: 16px;
+}
+
+.leaderboard-item:last-child {
+    border-bottom: none;
+}
+
+.leaderboard-item div {
+    flex: 1;
+    min-width: 0;
+}
+
+.leaderboard-item div span {
+    margin-right: 8px;
+}
+
+.leaderboard-rank {
+    font-weight: bold;
+    color: #bb86fc;
+    min-width: 30px;
+    font-size: 14px;
+}
+
+.leaderboard-score {
+    font-weight: bold;
+    color: #4caf50;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-primary {
+    background: rgba(187, 134, 252, 0.3);
+    color: #bb86fc;
+    border: 1px solid #bb86fc;
+}
+
+.current-player {
+    background: rgba(187, 134, 252, 0.15) !important;
+    border-left: 3px solid #bb86fc !important;
+    padding-left: 9px !important;
+}
+
+.empty-leaderboard {
+    padding: 20px 12px;
+    text-align: center;
+    color: #888;
+}
+
+/* ========== АДАПТИВНОСТЬ ========== */
+
+@media (max-width: 1024px) {
+    .game-content {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .leaderboard-sidebar {
+        flex: 1;
+        max-height: none;
+        position: relative;
+        top: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .game {
+        padding: 20px;
+        border-radius: 0;
+    }
+
+    .login-screen h1 {
+        font-size: 2rem;
+    }
+
+    .header {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .level-badge {
+        margin-left: 0;
+        display: block;
+        margin-top: 10px;
+    }
+
+    .game-content {
+        flex-direction: column-reverse;
+    }
+
+    .leaderboard-sidebar {
+        flex: 1;
+        width: 100%;
+    }
+    
+    .leaderboard-item {
+        font-size: 13px;
+        padding: 10px;
+    }
+    
+    .leaderboard-rank {
+        font-size: 13px;
+    }
+    
+    .leaderboard-score {
+        font-size: 13px;
+    }
+}

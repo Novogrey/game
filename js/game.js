@@ -1,0 +1,289 @@
+// ========== ЛОГИКА ИГРЫ ==========
+
+let currentPlayer = {
+    id: null,
+    name: '',
+    class: '',
+    score: 0
+};
+
+const levels = ['easy', 'medium', 'hard'];
+const levelNames = {
+    easy: 'Легкий',
+    medium: 'Средний',
+    hard: 'Сложный'
+};
+
+let currentLevelIndex = 0;
+let currentQuestions = [];
+let answeredQuestions = [];
+let currentQuestion = null;
+let answerLocked = false;
+let questions = { easy: [], medium: [], hard: [] };
+
+// ========== ФУНКЦИИ ЗАГРУЗКИ ==========
+
+function showLoading(text) {
+    document.getElementById('loadingText').textContent = text || 'Загрузка...';
+    document.getElementById('loadingOverlay').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+async function loadQuestions() {
+    showLoading('Загрузка вопросов...');
+    try {
+        const response = await fetch(APPS_SCRIPT_URL);
+        questions = await response.json();
+        console.log('Вопросы загружены:', questions);
+        hideLoading();
+        startLevel();
+    } catch (error) {
+        console.error('Ошибка загрузки вопросов:', error);
+        hideLoading();
+    }
+}
+
+// ========== ЛОГИН ИГРОКА ==========
+
+function login() {
+    const fullInput = document.getElementById('playerName').value.trim();
+    const errorDiv = document.getElementById('loginError');
+
+    if (!fullInput) {
+        errorDiv.style.display = 'block';
+        return;
+    }
+
+    errorDiv.style.display = 'none';
+
+    const parts = fullInput.split(' ');
+    let playerClass = '?';
+    let playerName = fullInput;
+
+    if (parts.length > 1) {
+        const lastPart = parts[parts.length - 1];
+        if (lastPart.match(/^\d+[А-Яа-я]?$/)) {
+            playerClass = lastPart;
+            playerName = parts.slice(0, -1).join(' ');
+        }
+    }
+
+    currentPlayer = {
+        id: 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        name: playerName,
+        class: playerClass,
+        score: 0
+    };
+
+    db.ref('players/' + currentPlayer.id).set({
+        id: currentPlayer.id,
+        name: currentPlayer.name,
+        class: currentPlayer.class,
+        score: 0,
+        lastUpdate: Date.now()
+    });
+
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('gameScreen').style.display = 'block';
+    document.getElementById('playerInfo').textContent = `👤 ${playerName} (${playerClass})`;
+
+    loadLeaderboard();
+    loadQuestions();
+}
+
+// ========== ЛОГИКА УРОВНЕЙ ==========
+
+function startLevel() {
+    const levelKey = levels[currentLevelIndex];
+    currentQuestions = [...questions[levelKey]];
+    answeredQuestions = [];
+
+    document.getElementById('currentLevelName').textContent = levelNames[levelKey] + ' уровень';
+    const badge = document.getElementById('currentLevelBadge');
+    badge.className = `level-badge level-${levelKey}`;
+    badge.textContent = levelKey === 'easy' ? '⭐' : levelKey === 'medium' ? '⭐⭐' : '⭐⭐⭐';
+
+    document.getElementById('nextLevelBtn').style.display = 'none';
+
+    showLoading('Подготовка фотографий...');
+
+    setTimeout(() => {
+        hideLoading();
+        loadRandomQuestion();
+    }, 800);
+}
+
+function loadRandomQuestion() {
+    if (answeredQuestions.length >= currentQuestions.length) {
+        showLevelComplete();
+        return;
+    }
+
+    const availableQuestions = currentQuestions.filter((_, index) => !answeredQuestions.includes(index));
+    const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+    const questionIndex = currentQuestions.indexOf(availableQuestions[randomIndex]);
+
+    currentQuestion = {
+        ...availableQuestions[randomIndex],
+        index: questionIndex
+    };
+
+    document.getElementById('progressText').textContent =
+        `Отвечено ${answeredQuestions.length} из ${currentQuestions.length}`;
+
+    document.getElementById('gameImage').src = currentQuestion.image;
+
+    preloadNextImage();
+
+    let options = [...currentQuestion.options];
+    if (!options.includes(currentQuestion.correct)) {
+        options.push(currentQuestion.correct);
+    }
+    options = shuffleArray(options);
+
+    let html = '';
+    options.forEach(opt => {
+        html += `<button class="option-btn" onclick="checkAnswer('${opt.replace(/'/g, "\\'")}')">${opt}</button>`;
+    });
+    document.getElementById('optionsContainer').innerHTML = html;
+
+    answerLocked = false;
+}
+
+function preloadNextImage() {
+    if (answeredQuestions.length < currentQuestions.length - 1) {
+        const nextAvailable = currentQuestions.filter((_, index) => !answeredQuestions.includes(index) && index !== currentQuestion.index);
+        if (nextAvailable.length > 0) {
+            const nextImg = new Image();
+            nextImg.src = nextAvailable[0].image;
+        }
+    }
+}
+
+// ========== ПРОВЕРКА ОТВЕТОВЗ ==========
+
+function checkAnswer(selected) {
+    if (answerLocked) return;
+
+    answerLocked = true;
+    const isCorrect = (selected === currentQuestion.correct);
+
+    document.querySelectorAll('.option-btn').forEach(btn => {
+        btn.disabled = true;
+        if (btn.textContent === currentQuestion.correct) {
+            btn.classList.add('correct');
+        }
+        if (btn.textContent === selected && !isCorrect) {
+            btn.classList.add('wrong');
+        }
+    });
+
+    if (isCorrect) {
+        currentPlayer.score += 10;
+        document.getElementById('score').textContent = currentPlayer.score;
+        db.ref('players/' + currentPlayer.id).update({
+            score: currentPlayer.score,
+            lastUpdate: Date.now()
+        });
+    }
+
+    db.ref('gameResults/' + Date.now()).set({
+        playerId: currentPlayer.id,
+        playerName: currentPlayer.name,
+        playerClass: currentPlayer.class,
+        level: levels[currentLevelIndex],
+        questionImage: currentQuestion.image,
+        selectedAnswer: selected,
+        correctAnswer: currentQuestion.correct,
+        isCorrect: isCorrect,
+        score: currentPlayer.score,
+        timestamp: Date.now()
+    });
+
+    answeredQuestions.push(currentQuestion.index);
+
+    setTimeout(() => {
+        if (answeredQuestions.length >= currentQuestions.length) {
+            showLevelComplete();
+        } else {
+            loadRandomQuestion();
+        }
+    }, 1500);
+}
+
+function showLevelComplete() {
+    document.getElementById('photoContainer').innerHTML =
+        '<div style="text-align: center; padding: 50px; font-size: 48px; animation: slideIn 0.5s ease;">🎉 Уровень пройден!</div>';
+    document.getElementById('optionsContainer').innerHTML = '';
+    document.getElementById('progressText').textContent =
+        `Пройдено ${currentQuestions.length} из ${currentQuestions.length}`;
+
+    if (currentLevelIndex < levels.length - 1) {
+        const nextLevelName = levelNames[levels[currentLevelIndex + 1]];
+        document.getElementById('nextLevelBtn').textContent = `Дальше → ${nextLevelName} уровень`;
+        document.getElementById('nextLevelBtn').style.display = 'block';
+    } else {
+        document.getElementById('photoContainer').innerHTML =
+            '<div style="text-align: center; padding: 50px; font-size: 48px; animation: slideIn 0.5s ease;">🏆 ИГРА ПРОЙДЕНА! Ты красавчик!</div>';
+    }
+}
+
+function goToNextLevel() {
+    currentLevelIndex++;
+    startLevel();
+}
+
+// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+function loadLeaderboard() {
+    db.ref('players').orderByChild('score').limitToLast(100).on('value', (snapshot) => {
+        const players = [];
+        snapshot.forEach(child => {
+            players.push(child.val());
+        });
+        
+        // Сортируем по баллам в убывающем порядке
+        players.sort((a, b) => (b.score || 0) - (a.score || 0));
+        
+        // Берем только топ-10
+        const top10 = players.slice(0, 10);
+
+        let html = '';
+        if (top10.length === 0) {
+            html = '<div class="leaderboard-item empty-leaderboard"><div>Пока нет рекордов</div></div>';
+        } else {
+            top10.forEach((p, index) => {
+                const isCurrentPlayer = currentPlayer.id === p.id ? ' current-player' : '';
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                html += `<div class="leaderboard-item${isCurrentPlayer}">
+                    <div><span class="leaderboard-rank">${medal ? medal + ' ' : ''}#${index + 1}</span><span>${p.name}</span> <span class="badge badge-primary">${p.class}</span></div>
+                    <span class="leaderboard-score">${p.score || 0}</span>
+                </div>`;
+            });
+        }
+
+        const leaderboardList = document.getElementById('leaderboardList');
+        if (leaderboardList) {
+            leaderboardList.innerHTML = html;
+        }
+    }, (error) => {
+        console.error('Ошибка при загрузке лидерборда:', error);
+    });
+}
+
+// ========== ИНИЦИАЛИЗАЦИЯ ==========
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Игра инициализирована');
+});

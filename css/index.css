@@ -1,0 +1,148 @@
+/* ========== ОСНОВНЫЕ СТИЛИ ========== */
+
+* {
+    box-sizing: border-box;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+    color: #e0e0e0;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+.container-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ========== HERO БЛОК ========== */
+
+.hero {
+    text-align: center;
+    padding: 80px 20px;
+    background: linear-gradient(135deg, rgba(187, 134, 252, 0.1) 0%, rgba(59, 89, 152, 0.1) 100%);
+    border-radius: 20px;
+    margin-bottom: 50px;
+}
+
+.hero h1 {
+    font-size: 4rem;
+    background: linear-gradient(135deg, #bb86fc 0%, #9b6ad0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 20px 0;
+    animation: slideDown 0.8s ease;
+}
+
+.hero p {
+    font-size: 1.3rem;
+    color: #b0b0b0;
+    margin: 0 0 40px 0;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========== КНОПКИ ========== */
+
+.cta-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+    margin-top: 40px;
+}
+
+.cta-buttons a {
+    padding: 16px 40px;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-play {
+    background: linear-gradient(135deg, #bb86fc 0%, #9b6ad0 100%);
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(187, 134, 252, 0.3);
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+}
+
+.btn-play:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(187, 134, 252, 0.4);
+}
+
+.btn-admin {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(244, 67, 54, 0.3);
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+}
+
+.btn-admin:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(244, 67, 54, 0.4);
+}
+
+/* ========== АДАПТИВНОСТЬ ========== */
+
+@media (max-width: 768px) {
+    .hero {
+        padding: 60px 15px;
+    }
+
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+
+    .hero p {
+        font-size: 1rem;
+    }
+
+    .cta-buttons {
+        gap: 15px;
+    }
+
+    .cta-buttons a {
+        padding: 14px 30px;
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero h1 {
+        font-size: 2rem;
+    }
+
+    .cta-buttons {
+        flex-direction: column;
+    }
+
+    .cta-buttons a {
+        width: 100%;
+        justify-content: center;
+    }
+}

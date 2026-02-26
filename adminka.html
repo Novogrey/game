@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Административная панель</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+<div class="admin-wrapper">
+    <!-- ЭКРАН ЛОГИНА -->
+    <div id="adminLogin" class="admin-login">
+        <div class="login-form">
+            <h1>🔐 Админ-панель</h1>
+            <p>Для доступа введите сложный пароль администратора</p>
+            <input type="password" id="adminPassword" placeholder="Введите пароль..." autofocus>
+            <button onclick="adminLogin()">Войти</button>
+            <div id="loginError" class="login-error"></div>
+        </div>
+    </div>
+
+    <!-- АДМИН ПАНЕЛЬ -->
+    <div id="adminPanel" class="admin-panel">
+        <div class="container">
+            <div class="admin-header">
+                <h1>📊 Панель управления</h1>
+                <button class="logout-btn" onclick="adminLogout()">🚪 Выход</button>
+            </div>
+
+            <!-- СТАТИСТИКА -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label"><span class="stat-icon">👥</span>Всего игроков</div>
+                    <div class="stat-value" id="totalPlayers">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label"><span class="stat-icon">📝</span>Всего ответов</div>
+                    <div class="stat-value" id="totalAnswers">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label"><span class="stat-icon">✅</span>Правильных ответов</div>
+                    <div class="stat-value" id="correctAnswers">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label"><span class="stat-icon">🎯</span>Точность</div>
+                    <div class="stat-value" id="accuracy">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label"><span class="stat-icon">💰</span>Сумма баллов</div>
+                    <div class="stat-value" id="totalScore">0</div>
+                </div>
+            </div>
+
+            <!-- СТАТИСТИКА ПО УРОВНЯМ -->
+            <h2 style="margin-top: 40px; margin-bottom: 20px;">📈 Статистика по уровням сложности</h2>
+            <div class="stats-grid" id="levelStatsContainer"></div>
+
+            <!-- ПАНЕЛЬ ДЕЙСТВИЙ -->
+            <div class="action-panel">
+                <h2>⚙️ Действия</h2>
+                <button id="resetBtn" class="reset-btn" onclick="resetDatabase()">
+                    🗑️ Очистить базу данных
+                </button>
+                <button class="btn btn-primary" onclick="exportData()" style="margin-left: 10px;">
+                    📥 Экспортировать данные
+                </button>
+                <a href="monik.html" class="btn btn-success" style="margin-left: 10px; text-decoration: none;">
+                    🎮 Открыть игру
+                </a>
+            </div>
+
+            <!-- ТАБЛИЦА УЧАСТНИКОВ -->
+            <div class="table-section" style="margin-top: 40px;">
+                <h2>👥 Список участников (отсортирован по баллам)</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>🎮 Игрок</th>
+                                <th>📚 Класс</th>
+                                <th>💰 Баллы</th>
+                            </tr>
+                        </thead>
+                        <tbody id="playersTableBody">
+                            <tr>
+                                <td colspan="3" class="no-data">Загрузка...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
