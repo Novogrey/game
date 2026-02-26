@@ -109,9 +109,41 @@ function loadPlayersTable() {
 
         let html = '';
         if (players.length === 0) {
-            html = '<tr><td colspan="4" class="no-data">Пока нет игроков</td></tr>';
+            html = '<tr><td colspan="5" class="no-data">Пока нет игроков</td></tr>';
         } else {
             players.forEach((player, index) => {
+                // Определяем статус прохождения (на основе баллов и количества результатов)
+                let statusBadge = '⏳ Ожидание...';
+                let statusColor = '#888';
+                
+                if (player.score > 0) {
+                    if (player.score <= 10) {
+                        statusBadge = '📖 Проходит легкий';
+                        statusColor = '#4caf50';
+                    } else if (player.score <= 25) {
+                        statusBadge = '📖 Проходит средний';
+                        statusColor = '#ff9800';
+                    } else {
+                        statusBadge = '📖 Проходит сложный';
+                        statusColor = '#f44336';
+                    }
+                    
+                    // Если последние баллы кратны 10, 15 или 25 - уровень завершен
+                    if (player.score % 50 === 0 && player.score > 0) {
+                        statusBadge = '✅ Завершил все уровни';
+                        statusColor = '#4caf50';
+                    } else if (player.score % 25 === 0 && player.score > 0 && player.score % 50 !== 0) {
+                        statusBadge = '✅ Завершил сложный';
+                        statusColor = '#4caf50';
+                    } else if (player.score % 15 === 0 && player.score > 0 && player.score % 25 !== 0) {
+                        statusBadge = '✅ Завершил средний';
+                        statusColor = '#4caf50';
+                    } else if (player.score % 10 === 0 && player.score > 0 && player.score % 15 !== 0) {
+                        statusBadge = '✅ Завершил легкий';
+                        statusColor = '#4caf50';
+                    }
+                }
+                
                 html += `<tr>
                     <td class="player-name">
                         <span style="color: #bb86fc; font-weight: 700; margin-right: 10px;">#${index + 1}</span>
@@ -119,8 +151,9 @@ function loadPlayersTable() {
                     </td>
                     <td><span class="class-badge">${player.class || '?'}</span></td>
                     <td><span class="score">${player.score || 0}</span></td>
+                    <td><span style="color: ${statusColor}; font-weight: 600; padding: 5px 10px; background: rgba(255,255,255,0.1); border-radius: 4px;">${statusBadge}</span></td>
                     <td>
-                        <button class="btn btn-danger" onclick="kickPlayer('${player.key}', '${player.name}')">🚪 Выкидать</button>
+                        <button class="btn btn-danger" onclick="deleteAllResultsByPlayer('${player.key}', '${player.name}')">🗑️ Удалить результаты</button>
                     </td>
                 </tr>`;
             });
@@ -242,7 +275,7 @@ function exportData() {
 // ========== ЗАГРУЗКА РЕЗУЛЬТАТОВ ТЕСТОВ ==========
 
 function loadGameResults() {
-    db.ref('gameResults').orderByChild('timestamp').limitToLast(50).on('value', (snapshot) => {
+    db.ref('gameResults').on('value', (snapshot) => {
         const results = [];
         snapshot.forEach(child => {
             results.push({
@@ -251,8 +284,8 @@ function loadGameResults() {
             });
         });
 
-        // Сортируем по новым результатам
-        results.reverse();
+        // Сортируем по новым результатам (самые свежие в начале)
+        results.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
         let html = '';
         if (results.length === 0) {
@@ -281,7 +314,16 @@ function loadGameResults() {
             });
         }
 
-        document.getElementById('resultsTableBody').innerHTML = html;
+        const resultsTableBody = document.getElementById('resultsTableBody');
+        if (resultsTableBody) {
+            resultsTableBody.innerHTML = html;
+            // Показываем информацию о количестве записей
+            const tableSection = document.querySelector('.table-section:last-of-type');
+            if (tableSection) {
+                const h2 = tableSection.querySelector('h2');
+                h2.textContent = `📋 Результаты тестов (всего ${results.length})`;
+            }
+        }
     });
 }
 
@@ -301,19 +343,31 @@ function deleteResult(resultKey) {
 
 // ========== ВЫКИДЫВАНИЕ ИГРОКА (ПРЕКРАЩЕНИЕ ТЕСТА) ==========
 
-function kickPlayer(playerId, playerName) {
-    if (confirm(`❓ Вы уверены что хотите выкидать игрока "${playerName}"?\n\nТабло его обновится с некорректными данными.`)) {
-        // Помечаем игрока как "выкиданного" в Firebase
-        db.ref('players/' + playerId).update({
-            kicked: true,
-            kickedAt: new Date().getTime(),
-            kickedReason: 'admin'
-        }).then(() => {
-            alert(`✅ Игрок "${playerName}" был выкидан из игры!`);
-            loadPlayersTable();
-        }).catch(error => {
-            console.error('Ошибка при выкидывании игрока:', error);
-            alert('❌ Ошибка при выкидывании игрока');
+function deleteAllResultsByPlayer(playerId, playerName) {
+    if (confirm(`❓ Вы уверены что хотите удалить ВСЕ результаты тестов игрока "${playerName}"?\n\nЭто удалит все его ответы, но не самого игрока.`)) {
+        // Сначала удаляем все результаты этого игрока
+        db.ref('gameResults').orderByChild('playerId').equalTo(playerId).once('value', (snapshot) => {
+            const updates = {};
+            let deletedCount = 0;
+            
+            snapshot.forEach(child => {
+                updates['/gameResults/' + child.key] = null;
+                deletedCount++;
+            });
+            
+            // Обнуляем баллы игрока
+            updates['/players/' + playerId + '/score'] = 0;
+            
+            // Применяем все удаления одновременно
+            db.ref().update(updates).then(() => {
+                alert(`✅ Удалено ${deletedCount} результатов! Баллы игрока обнулены.`);
+                loadPlayersTable();
+                loadGameResults();
+                loadAdminData();
+            }).catch(error => {
+                console.error('Ошибка при удалении:', error);
+                alert('❌ Ошибка при удалении результатов');
+            });
         });
     }
 }
