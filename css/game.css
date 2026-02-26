@@ -1,10 +1,10 @@
 /* ========== СТИЛИ ДЛЯ ИГРЫ ========== */
 
 .game {
-    max-width: 900px;
-    margin: 0 auto;
+    max-width: 1200px;
+    margin: 20px auto;
     background: #1e1e1e;
-    padding: 30px;
+    padding: 40px;
     border-radius: 15px;
     border: 1px solid #333;
     min-height: 600px;
@@ -129,7 +129,7 @@
 }
 
 .level-info span {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: bold;
     color: #bb86fc;
 }
@@ -173,7 +173,7 @@
 
 #gameImage {
     width: 100%;
-    max-height: 450px;
+    max-height: 600px;
     object-fit: contain;
     border-radius: 12px;
     border: 2px solid #333;
@@ -195,14 +195,14 @@
 
 .options {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 12px;
-    margin: 25px 0;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin: 30px 0;
 }
 
 .option-btn {
-    padding: 16px 12px;
-    font-size: 16px;
+    padding: 20px 16px;
+    font-size: 18px;
     font-weight: 600;
     cursor: pointer;
     border: 2px solid #3d3d3d;
@@ -213,6 +213,10 @@
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .option-btn:hover:not(:disabled) {
@@ -264,17 +268,21 @@
 
 .next-level-btn {
     width: 100%;
-    padding: 16px;
+    padding: 20px;
     background: linear-gradient(135deg, #bb86fc 0%, #9b6ad0 100%);
     color: #fff;
     border: none;
     border-radius: 8px;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     cursor: pointer;
-    margin: 30px 0 20px;
+    margin: 40px 0 20px;
     transition: all 0.3s ease;
     display: none;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .next-level-btn:hover {
@@ -291,13 +299,13 @@
 }
 
 .leaderboard-sidebar {
-    flex: 0 0 280px;
+    flex: 0 0 320px;
     padding: 20px;
     background: linear-gradient(135deg, #252525 0%, #1a1a2e 100%);
     border-radius: 10px;
     border: 1px solid #333;
-    max-height: 85vh;
-    overflow-y: auto;
+    max-height: none;
+    overflow-y: visible;
     position: sticky;
     top: 20px;
 }
