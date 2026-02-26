@@ -218,70 +218,93 @@ function loadPlayersStats() {
 }
 
 function loadPlayersTable() {
-    db.ref('players').on('value', (snapshot) => {
-        const players = [];
-        snapshot.forEach(child => {
-            players.push({
-                ...child.val(),
-                key: child.key
-            });
+    // Сначала загружаем все результаты тестов, чтобы определить пройденные уровни
+    db.ref('gameResults').once('value', (resultsSnapshot) => {
+        const playerLevels = {}; // { playerId: ['easy', 'medium', 'hard'] }
+        
+        resultsSnapshot.forEach(child => {
+            const result = child.val();
+            if (!playerLevels[result.playerId]) {
+                playerLevels[result.playerId] = new Set();
+            }
+            playerLevels[result.playerId].add(result.level);
         });
+        
+        // Конвертируем Set в Array
+        Object.keys(playerLevels).forEach(key => {
+            playerLevels[key] = Array.from(playerLevels[key]).sort();
+        });
+        
+        // Теперь загружаем список игроков
+        db.ref('players').on('value', (snapshot) => {
+            const players = [];
+            snapshot.forEach(child => {
+                players.push({
+                    ...child.val(),
+                    key: child.key
+                });
+            });
 
-        players.sort((a, b) => (b.score || 0) - (a.score || 0));
+            players.sort((a, b) => (b.score || 0) - (a.score || 0));
 
-        let html = '';
-        if (players.length === 0) {
-            html = '<tr><td colspan="5" class="no-data">Пока нет игроков</td></tr>';
-        } else {
-            players.forEach((player, index) => {
-                // Определяем статус прохождения (на основе баллов и количества результатов)
-                let statusBadge = '⏳ Ожидание...';
-                let statusColor = '#888';
-                
-                if (player.score > 0) {
-                    if (player.score <= 10) {
-                        statusBadge = '📖 Проходит легкий';
+            let html = '';
+            if (players.length === 0) {
+                html = '<tr><td colspan="5" class="no-data">Пока нет игроков</td></tr>';
+            } else {
+                players.forEach((player, index) => {
+                    // Определяем статус на основе пройденных уровней
+                    let statusBadge = '⏳ Не начинал';
+                    let statusColor = '#888';
+                    
+                    const completedLevels = playerLevels[player.id] || [];
+                    
+                    if (completedLevels.length === 0) {
+                        statusBadge = '⏳ Не начинал';
+                        statusColor = '#888';
+                    } else if (completedLevels.length === 1) {
+                        if (completedLevels[0] === 'easy') {
+                            statusBadge = '📖 Проходит легкий';
+                            statusColor = '#4caf50';
+                        } else if (completedLevels[0] === 'medium') {
+                            statusBadge = '📖 Проходит средний';
+                            statusColor = '#ff9800';
+                        } else {
+                            statusBadge = '📖 Проходит сложный';
+                            statusColor = '#f44336';
+                        }
+                    } else if (completedLevels.length === 2) {
+                        if (completedLevels.includes('hard')) {
+                            statusBadge = '📖 Проходит сложный';
+                            statusColor = '#f44336';
+                        } else if (completedLevels.includes('medium')) {
+                            statusBadge = '✅ Завершил средний';
+                            statusColor = '#4caf50';
+                        } else {
+                            statusBadge = '✅ Завершил легкий';
+                            statusColor = '#4caf50';
+                        }
+                    } else if (completedLevels.length === 3) {
+                        statusBadge = '✅ Завершил все уровни!';
                         statusColor = '#4caf50';
-                    } else if (player.score <= 25) {
-                        statusBadge = '📖 Проходит средний';
-                        statusColor = '#ff9800';
-                    } else {
-                        statusBadge = '📖 Проходит сложный';
-                        statusColor = '#f44336';
                     }
                     
-                    // Если последние баллы кратны 10, 15 или 25 - уровень завершен
-                    if (player.score % 50 === 0 && player.score > 0) {
-                        statusBadge = '✅ Завершил все уровни';
-                        statusColor = '#4caf50';
-                    } else if (player.score % 25 === 0 && player.score > 0 && player.score % 50 !== 0) {
-                        statusBadge = '✅ Завершил сложный';
-                        statusColor = '#4caf50';
-                    } else if (player.score % 15 === 0 && player.score > 0 && player.score % 25 !== 0) {
-                        statusBadge = '✅ Завершил средний';
-                        statusColor = '#4caf50';
-                    } else if (player.score % 10 === 0 && player.score > 0 && player.score % 15 !== 0) {
-                        statusBadge = '✅ Завершил легкий';
-                        statusColor = '#4caf50';
-                    }
-                }
-                
-                html += `<tr>
-                    <td class="player-name">
-                        <span style="color: #bb86fc; font-weight: 700; margin-right: 10px;">#${index + 1}</span>
-                        ${player.name || 'Без имени'}
-                    </td>
-                    <td><span class="class-badge">${player.class || '?'}</span></td>
-                    <td><span class="score">${player.score || 0}</span></td>
-                    <td><span style="color: ${statusColor}; font-weight: 600; padding: 5px 10px; background: rgba(255,255,255,0.1); border-radius: 4px;">${statusBadge}</span></td>
-                    <td>
-                        <button class="btn btn-danger" onclick="deleteAllResultsByPlayer('${player.key}', '${player.name}')">🗑️ Удалить игрока</button>
-                    </td>
-                </tr>`;
-            });
-        }
+                    html += `<tr>
+                        <td class="player-name">
+                            <span style="color: #bb86fc; font-weight: 700; margin-right: 10px;">#${index + 1}</span>
+                            ${player.name || 'Без имени'}
+                        </td>
+                        <td><span class="class-badge">${player.class || '?'}</span></td>
+                        <td><span class="score">${player.score || 0}</span></td>
+                        <td><span style="color: ${statusColor}; font-weight: 600; padding: 5px 10px; background: rgba(255,255,255,0.1); border-radius: 4px;">${statusBadge}</span></td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteAllResultsByPlayer('${player.key}', '${player.name}')">🗑️ Удалить игрока</button>
+                        </td>
+                    </tr>`;
+                });
+            }
 
-        document.getElementById('playersTableBody').innerHTML = html;
+            document.getElementById('playersTableBody').innerHTML = html;
+        });
     });
 }
 
