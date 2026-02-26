@@ -187,18 +187,13 @@ function loadRandomQuestion() {
     document.getElementById('progressText').textContent =
         `Отвечено ${answeredQuestions.length} из ${currentQuestions.length}`;
 
-    // Убедимся, что элемент существует перед присваиванием src
-    let gameImage = document.getElementById('gameImage');
-    if (!gameImage) {
-        console.warn('gameImage не найден, восстанавливаем photoContainer');
-        document.getElementById('photoContainer').innerHTML = '<img id="gameImage" src="" alt="Загрузка...">';
-        gameImage = document.getElementById('gameImage');
-    }
-    
+    // gameImage должен быть всегда в DOM после startLevel
+    const gameImage = document.getElementById('gameImage');
     if (gameImage) {
         gameImage.src = currentQuestion.image;
     } else {
-        console.error('Не удалось найти или создать элемент gameImage');
+        // Если вдруг нет, покажем ошибку и не будем пытаться восстанавливать
+        console.error('Элемент gameImage не найден в DOM. Проверьте вызов startLevel!');
         return;
     }
 
